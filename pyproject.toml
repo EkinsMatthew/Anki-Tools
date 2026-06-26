@@ -1,7 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "anki-tools"
 version = "0.1.0"
-description = "Add your description here"
+description = "Personal vocabulary maintenance tool for Anki decks"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+anki-add = "anki_tools.add_words:main"
+anki-cli = "anki_tools.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-mock>=3.14",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires Anki to be running with AnkiConnect addon",
+]
