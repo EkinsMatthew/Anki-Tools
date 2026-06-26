@@ -1,3 +1,18 @@
+"""
+Shared CSS for all "Italian Vocabulary" card templates.
+
+This is the **canonical** stylesheet — both this tool (via AnkiConnect) and
+the parent project's ``generate_anki.py`` (via genanki) must use the same
+CSS so that personal cards and frequency-list cards look identical in Anki.
+
+When making visual changes, edit `CARD_CSS` here, then:
+
+1. Re-run ``anki-add`` on any batch file — it calls ``update_model_templates``
+   which pushes the new CSS to the existing note type in Anki.
+2. Regenerate the parent project's ``.apkg`` so the genanki-built model also
+   picks up the change.
+"""
+
 CARD_CSS = """
 .card {
     font-family: Georgia, serif;

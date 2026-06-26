@@ -219,3 +219,7 @@ __marimo__/
 
 # Personal vocabulary batch files (private data)
 words/*.json
+
+# User Defined ignores
+.DS_Store
+docs/

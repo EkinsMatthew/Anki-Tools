@@ -1,10 +1,23 @@
+"""
+Stub implementation of `AnkiClient` for direct ``.apkg`` file editing.
+
+All methods raise `NotImplementedError`.  This module exists to define the
+interface contract that a future implementation must fulfil — allowing callers
+to be written against `AnkiClient` today without depending on Anki being open.
+"""
+
 from anki_tools.client.base import AnkiClient
 
 
 class ApkgClient(AnkiClient):
     """
-    # TODO: implement direct .apkg file editing without Anki running.
-    All methods are stubs — the interface is defined; the implementation is not.
+    Future `AnkiClient` that edits ``.apkg`` files directly without Anki running.
+
+    An ``.apkg`` file is a ZIP archive containing a SQLite database.  Once
+    implemented, this client will allow adding notes to an offline collection
+    file, which can then be imported into Anki.
+
+    All methods currently raise `NotImplementedError`.
     """
 
     def deck_names(self) -> list[str]:
