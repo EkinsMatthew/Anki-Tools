@@ -68,21 +68,28 @@ def pos_tag(pos: str) -> str:
 
 def make_example_with_blank(italian: str, example_it: str) -> str:
     """
-    Replace the target word in an example sentence with ``___``.
+    Replace the target word in an example sentence with a styled blank span.
 
-    Matches the whole word only (word boundaries), case-insensitively.
+    The matched word is placed inside ``<span class="blank">`` with its
+    original casing preserved, so the blank line is exactly as wide as the
+    word that will be revealed on the back of the card.
+
     Returns an empty string if the word does not appear verbatim — callers
     should prompt the user for a manual substitution in that case.
 
     Examples:
         >>> make_example_with_blank("sconto", "Mi fa uno sconto?")
-        'Mi fa uno ___?'
+        'Mi fa uno <span class="blank">sconto</span>?'
         >>> make_example_with_blank("andare", "Dove vai?")
         ''
     """
     pattern = re.compile(re.escape(italian.strip()), re.IGNORECASE)
-    result, count = pattern.subn("___", example_it, count=1)
-    return result if count else ""
+
+    def _blank_span(m: re.Match) -> str:
+        return f'<span class="blank">{m.group(0)}</span>'
+
+    result = pattern.sub(_blank_span, example_it, count=1)
+    return result if result != example_it else ""
 
 
 def build_fields(entry: WordEntry) -> dict[str, str]:
@@ -95,8 +102,11 @@ def build_fields(entry: WordEntry) -> dict[str, str]:
 
     ``ExampleWithBlank`` is resolved in this order:
 
-    1. Use ``entry.example_with_blank`` if the user supplied it explicitly.
-    2. Otherwise, attempt auto-generation via `make_example_with_blank`.
+    1. Use ``entry.example_with_blank`` if the user supplied it explicitly
+       (wrapping any ``___`` placeholder with the blank span).
+    2. Otherwise, attempt auto-generation via `make_example_with_blank`, which
+       returns the sentence with the word itself inside the blank span so the
+       underline width matches the revealed word exactly.
     3. If the word doesn't appear verbatim in the example, leave the field
        empty — the fill-in-the-blank card template will not be generated.
 
@@ -109,13 +119,14 @@ def build_fields(entry: WordEntry) -> dict[str, str]:
     """
     word = entry.italian.lower().strip()
     extra_info = _render_extra_info(entry.extra_info) if entry.extra_info else ""
-    example_with_blank = entry.example_with_blank or make_example_with_blank(
-        entry.italian, entry.example_it
-    )
-    if example_with_blank:
-        example_with_blank = example_with_blank.replace(
+    if entry.example_with_blank:
+        # Manual entry — wrap any ___ placeholder with the blank span
+        example_with_blank = entry.example_with_blank.replace(
             "___", '<span class="blank">___</span>'
         )
+    else:
+        # Auto-generate — returns finished HTML with the word inside the span
+        example_with_blank = make_example_with_blank(entry.italian, entry.example_it)
     return {
         "Italian": entry.italian,
         "English": entry.english,

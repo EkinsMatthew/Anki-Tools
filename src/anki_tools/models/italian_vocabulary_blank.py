@@ -41,7 +41,7 @@ CARD_CSS = """
 .blank {
     display: inline-block;
     border-bottom: 2px solid #1a1a2e;
-    min-width: 4em;
+    min-width: 1em;
     padding: 0 4px;
     color: transparent;
     line-height: 1.2;

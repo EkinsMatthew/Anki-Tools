@@ -80,12 +80,12 @@ def test_all_fields_present():
 
 def test_example_with_blank_auto_generated_when_word_appears_verbatim():
     fields = build_fields(_entry(italian="sconto", example_it="Mi fa uno sconto?"))
-    assert fields["ExampleWithBlank"] == 'Mi fa uno <span class="blank">___</span>?'
+    assert fields["ExampleWithBlank"] == 'Mi fa uno <span class="blank">sconto</span>?'
 
 
 def test_example_with_blank_case_insensitive():
     fields = build_fields(_entry(italian="sconto", example_it="Ho preso uno Sconto."))
-    assert '<span class="blank">___</span>' in fields["ExampleWithBlank"]
+    assert '<span class="blank">Sconto</span>' in fields["ExampleWithBlank"]
 
 
 def test_example_with_blank_empty_when_word_not_verbatim():
@@ -113,7 +113,7 @@ def test_example_with_blank_empty_when_no_example():
 
 def test_make_example_with_blank_replaces_first_occurrence():
     result = make_example_with_blank("casa", "La casa è grande. Vendi la casa.")
-    assert result == "La ___ è grande. Vendi la casa."
+    assert result == 'La <span class="blank">casa</span> è grande. Vendi la casa.'
 
 
 def test_make_example_with_blank_returns_empty_when_no_match():
@@ -123,12 +123,12 @@ def test_make_example_with_blank_returns_empty_when_no_match():
 
 def test_make_example_with_blank_case_insensitive():
     result = make_example_with_blank("sconto", "Ho preso uno SCONTO.")
-    assert result == "Ho preso uno ___."
+    assert result == 'Ho preso uno <span class="blank">SCONTO</span>.'
 
 
 def test_make_example_with_blank_strips_word_whitespace():
     result = make_example_with_blank("  sconto  ", "Mi fa uno sconto?")
-    assert result == "Mi fa uno ___?"
+    assert result == 'Mi fa uno <span class="blank">sconto</span>?'
 
 
 # ---------------------------------------------------------------------------
