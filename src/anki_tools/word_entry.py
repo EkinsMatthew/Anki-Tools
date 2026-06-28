@@ -60,8 +60,14 @@ class WordEntry:
             that `card_builder.build_tags` adds automatically.  Use
             ``category::`` tags to group personal words
             (e.g. ``category::parole_che_ho_incontrato``).
-        example_it: Example sentence in Italian (optional).
-        example_en: English translation of `example_it` (optional).
+        example_it: Example sentence (optional).
+        example_en: Translation of `example_it` (optional).
+        example_with_blank: The example sentence with the target word replaced
+            by ``___`` (optional).  When populated, generates a fill-in-the-
+            blank card in addition to the standard translation card.  If left
+            empty, `card_builder.build_fields` will attempt to auto-generate
+            it by substituting the target word; if that fails (e.g. conjugated
+            form), no fill-in-the-blank card is produced.
         dictionary_link: Direct URL to an online dictionary entry (optional).
             Rendered as a "Dictionary ↗" link on the card back.
         extra_info: Free-form grammatical note rendered as a badge on the card
@@ -74,6 +80,7 @@ class WordEntry:
     tags: list[str] = field(default_factory=list)
     example_it: str = ""
     example_en: str = ""
+    example_with_blank: str = ""
     dictionary_link: str = ""
     extra_info: str = ""
 
@@ -86,6 +93,7 @@ class WordEntry:
             "tags": self.tags,
             "example_it": self.example_it,
             "example_en": self.example_en,
+            "example_with_blank": self.example_with_blank,
             "dictionary_link": self.dictionary_link,
             "extra_info": self.extra_info,
         }
@@ -108,6 +116,7 @@ class WordEntry:
             tags=data.get("tags", []),
             example_it=data.get("example_it", ""),
             example_en=data.get("example_en", ""),
+            example_with_blank=data.get("example_with_blank", ""),
             dictionary_link=data.get("dictionary_link", ""),
             extra_info=data.get("extra_info", ""),
         )

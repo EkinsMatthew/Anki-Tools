@@ -1,16 +1,14 @@
 """
 Shared CSS for all "Italian Vocabulary" card templates.
 
-This is the **canonical** stylesheet — both this tool (via AnkiConnect) and
-the parent project's ``generate_anki.py`` (via genanki) must use the same
-CSS so that personal cards and frequency-list cards look identical in Anki.
+This is the **canonical** stylesheet for the note type defined in
+``models.italian_vocabulary``.  Any other tool that builds an ``.apkg``
+containing the same note type (e.g. via genanki) should import this constant
+rather than duplicating it.
 
-When making visual changes, edit `CARD_CSS` here, then:
-
-1. Re-run ``anki-add`` on any batch file — it calls ``update_model_templates``
-   which pushes the new CSS to the existing note type in Anki.
-2. Regenerate the parent project's ``.apkg`` so the genanki-built model also
-   picks up the change.
+When making visual changes, edit `CARD_CSS` here, then re-run ``anki-add``
+on any batch file — ``update_model_templates`` will push the updated CSS to
+the live note type in Anki automatically.
 """
 
 CARD_CSS = """
@@ -60,6 +58,10 @@ hr {
     font-size: 0.78em;
     font-family: monospace;
 }
+.badge.badge-volgare {
+    background: #c0392b;
+    color: #fff;
+}
 .footer {
     display: flex;
     justify-content: space-between;
@@ -92,5 +94,16 @@ hr {
 .example-en {
     color: #666;
     font-size: 0.85em;
+}
+.blank {
+    display: inline-block;
+    border-bottom: 2px solid #1a1a2e;
+    padding: 0 6px;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #1a1a2e;
+    min-width: 2.5em;
+    text-align: center;
 }
 """

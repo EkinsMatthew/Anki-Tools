@@ -87,6 +87,13 @@ class AnkiConnectClient(AnkiClient):
             model={"name": definition["modelName"], "templates": templates},
         )
 
+    def update_model_styling(self, definition: dict) -> None:
+        """Push updated CSS to an existing note type in Anki."""
+        self._invoke(
+            "updateModelStyling",
+            model={"name": definition["modelName"], "css": definition["css"]},
+        )
+
     def find_notes(self, query: str) -> list[int]:
         """Search using Anki's query syntax and return matching note IDs."""
         return self._invoke("findNotes", query=query)
@@ -106,9 +113,52 @@ class AnkiConnectClient(AnkiClient):
                 "modelName": model_name,
                 "fields": fields,
                 "tags": tags,
-                "options": {"allowDuplicate": False},
+                "options": {"allowDuplicate": True},
             },
         )
+
+    def update_model_fields(self, definition: dict) -> None:
+        """Add any fields in `definition` that don't yet exist on the live model.
+
+        Uses ``modelFieldNames`` to inspect the current fields and
+        ``modelFieldAdd`` to insert missing ones at the correct position.
+        Both actions require AnkiConnect ≥ 2021.  If either is not supported,
+        a warning is printed and the method returns without error — the note
+        type's existing fields are left untouched.
+        """
+        import sys
+
+        model_name = definition["modelName"]
+        try:
+            current: set[str] = set(self._invoke("modelFieldNames", modelName=model_name))
+        except AnkiConnectError:
+            return
+        for i, field_name in enumerate(definition["inOrderFields"]):
+            if field_name not in current:
+                try:
+                    self._invoke("modelFieldAdd", modelName=model_name, fieldName=field_name, index=i)
+                except AnkiConnectError as exc:
+                    if "unsupported action" in str(exc).lower():
+                        print(
+                            f"Warning: your AnkiConnect version does not support adding fields "
+                            f"automatically. Add '{field_name}' to the '{model_name}' note type "
+                            f"manually in Anki (Tools → Manage Note Types → Fields).",
+                            file=sys.stderr,
+                        )
+                        return
+                    raise
+
+    def find_cards(self, query: str) -> list[int]:
+        """Search using Anki's query syntax and return matching card IDs."""
+        return self._invoke("findCards", query=query)
+
+    def change_card_deck(self, card_ids: list[int], deck_name: str) -> None:
+        """Move cards to deck_name (created if absent)."""
+        self._invoke("changeDeck", cards=card_ids, deck=deck_name)
+
+    def add_tags(self, note_ids: list[int], tags: list[str]) -> None:
+        """Add tags to existing notes (additive; existing tags are preserved)."""
+        self._invoke("addTags", notes=note_ids, tags=" ".join(tags))
 
     def delete_notes(self, note_ids: list[int]) -> None:
         """Permanently delete notes by ID."""

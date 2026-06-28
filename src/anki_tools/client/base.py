@@ -71,11 +71,33 @@ class AnkiClient(ABC):
         """
 
     @abstractmethod
+    def update_model_styling(self, definition: dict) -> None:
+        """Sync the CSS on an existing note type to match `definition`."""
+
+    @abstractmethod
     def find_notes(self, query: str) -> list[int]:
         """
         Search for notes using Anki's search syntax and return their IDs.
 
         Example query: ``'Italian:"sconto" deck:"Italian Vocabulary :: Personale"'``
+        """
+
+    @abstractmethod
+    def find_cards(self, query: str) -> list[int]:
+        """
+        Search for cards using Anki's search syntax and return their IDs.
+
+        Supports the ``card:"Template Name"`` filter to target a specific card
+        within a note — e.g. ``'nid:123456 card:"Fill in the Blank"'``.
+        """
+
+    @abstractmethod
+    def change_card_deck(self, card_ids: list[int], deck_name: str) -> None:
+        """
+        Move cards to `deck_name`, creating the deck if it does not exist.
+
+        Use this to route fill-in-the-blank cards to a dedicated deck while
+        keeping the standard translation cards in the main deck.
         """
 
     @abstractmethod
@@ -98,6 +120,29 @@ class AnkiClient(ABC):
         Raises:
             AnkiConnectError: if Anki rejects the note (e.g. duplicate on
                 first field when ``allowDuplicate`` is False).
+        """
+
+    @abstractmethod
+    def update_model_fields(self, definition: dict) -> None:
+        """
+        Sync the field list on an existing note type to match `definition`.
+
+        Call this after adding a field to ``FIELDS`` in
+        `anki_tools.models.italian_vocabulary` to push the addition to Anki
+        without recreating the note type.  Anki preserves field order based
+        on the ``inOrderFields`` list in `definition`.
+        """
+
+    @abstractmethod
+    def add_tags(self, note_ids: list[int], tags: list[str]) -> None:
+        """
+        Add tags to existing notes.
+
+        Tags already present on a note are left unchanged; this is additive only.
+
+        Args:
+            note_ids: IDs of the notes to tag.
+            tags: Tag strings to add.
         """
 
     @abstractmethod

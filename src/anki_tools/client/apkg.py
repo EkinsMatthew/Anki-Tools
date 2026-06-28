@@ -35,6 +35,9 @@ class ApkgClient(AnkiClient):
     def update_model_templates(self, definition: dict) -> None:
         raise NotImplementedError("# TODO: implement direct .apkg editing")
 
+    def update_model_styling(self, definition: dict) -> None:
+        raise NotImplementedError("# TODO: implement direct .apkg editing")
+
     def find_notes(self, query: str) -> list[int]:
         raise NotImplementedError("# TODO: implement direct .apkg editing")
 
@@ -45,6 +48,18 @@ class ApkgClient(AnkiClient):
         fields: dict[str, str],
         tags: list[str],
     ) -> int:
+        raise NotImplementedError("# TODO: implement direct .apkg editing")
+
+    def update_model_fields(self, definition: dict) -> None:
+        raise NotImplementedError("# TODO: implement direct .apkg editing")
+
+    def find_cards(self, query: str) -> list[int]:
+        raise NotImplementedError("# TODO: implement direct .apkg editing")
+
+    def change_card_deck(self, card_ids: list[int], deck_name: str) -> None:
+        raise NotImplementedError("# TODO: implement direct .apkg editing")
+
+    def add_tags(self, note_ids: list[int], tags: list[str]) -> None:
         raise NotImplementedError("# TODO: implement direct .apkg editing")
 
     def delete_notes(self, note_ids: list[int]) -> None:

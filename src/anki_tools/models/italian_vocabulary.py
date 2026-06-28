@@ -1,11 +1,10 @@
 """
 Definition of the "Italian Vocabulary" Anki note type.
 
-This module is the **canonical source of truth** for the card format used
-across this project.  Both the `anki-add` tool (which creates/updates the note
-type via AnkiConnect) and the parent project's ``generate_anki.py`` script
-(which creates ``.apkg`` files) must stay consistent with the field names and
-CSS defined here.
+This module is the **canonical source of truth** for the card format.
+Any tool that creates or updates this note type — whether via AnkiConnect
+or by generating an ``.apkg`` file — should derive its field list, CSS, and
+templates from this module rather than duplicating them.
 
 Adding a new card template
 --------------------------
@@ -38,23 +37,49 @@ FIELDS = [
     "WordReferenceLink",
     "Example",
     "ExampleTranslation",
+    "ExampleWithBlank",
 ]
 """
 Ordered list of field names for the note type.
 
 | Field | Description |
 |---|---|
-| ``Italian`` | The word as it appears on the card front |
-| ``English`` | Translation shown on the card back |
+| ``Italian`` | The target word |
+| ``English`` | Translation |
 | ``PartOfSpeech`` | Abbreviation e.g. ``v.tr.``, ``s.m.`` |
 | ``ExtraInfo`` | Pre-rendered HTML badge ``<span>`` elements |
 | ``Tier`` | Frequency tier label e.g. ``Fondamentale``, ``Personale`` |
-| ``TierClass`` | CSS class for tier colour; empty for personal words |
+| ``TierClass`` | CSS class for tier colour; empty when not applicable |
 | ``DictionaryLink`` | Optional URL rendered as "Dictionary ↗" |
 | ``WordReferenceLink`` | Auto-generated WordReference URL |
-| ``Example`` | Italian example sentence |
-| ``ExampleTranslation`` | English translation of the example |
+| ``Example`` | Example sentence in the target language |
+| ``ExampleTranslation`` | Translation of the example sentence |
+| ``ExampleWithBlank`` | Example sentence with the target word replaced by ``___``; populating this field generates a fill-in-the-blank card |
 """
+
+_SHARED_BACK_FOOTER = (
+    "{{#ExtraInfo}}"
+    '<div class="badges">{{ExtraInfo}}</div>'
+    "{{/ExtraInfo}}"
+    "{{#Example}}"
+    '<div class="example">'
+    '<div class="example-it">{{Example}}</div>'
+    '<div class="example-en">{{ExampleTranslation}}</div>'
+    "</div>"
+    "{{/Example}}"
+    '<div class="footer">'
+    '<span class="{{TierClass}}">{{Tier}}</span>'
+    '<div class="footer-links">'
+    "{{#DictionaryLink}}"
+    '<a class="dict-link" href="{{DictionaryLink}}">Dictionary ↗</a>'
+    "{{/DictionaryLink}}"
+    "{{#WordReferenceLink}}"
+    '<a class="dict-link" href="{{WordReferenceLink}}">WordRef ↗</a>'
+    "{{/WordReferenceLink}}"
+    "</div>"
+    "</div>"
+    "</div>"
+)
 
 TEMPLATES = [
     {
@@ -71,27 +96,29 @@ TEMPLATES = [
             '<div class="pos">{{PartOfSpeech}}</div>'
             "<hr>"
             '<div class="translation">{{English}}</div>'
-            "{{#ExtraInfo}}"
-            '<div class="badges">{{ExtraInfo}}</div>'
-            "{{/ExtraInfo}}"
-            "{{#Example}}"
-            '<div class="example">'
-            '<div class="example-it">{{Example}}</div>'
-            '<div class="example-en">{{ExampleTranslation}}</div>'
+            + _SHARED_BACK_FOOTER
+        ),
+    },
+    {
+        "name": "Fill in the Blank",
+        # Only generates a card when ExampleWithBlank is populated.
+        "qfmt": (
+            "{{#ExampleWithBlank}}"
+            '<div class="card">'
+            '<div class="example-it">{{ExampleWithBlank}}</div>'
+            '<div class="pos">{{PartOfSpeech}}</div>'
             "</div>"
-            "{{/Example}}"
-            '<div class="footer">'
-            '<span class="{{TierClass}}">{{Tier}}</span>'
-            '<div class="footer-links">'
-            "{{#DictionaryLink}}"
-            '<a class="dict-link" href="{{DictionaryLink}}">Dictionary ↗</a>'
-            "{{/DictionaryLink}}"
-            "{{#WordReferenceLink}}"
-            '<a class="dict-link" href="{{WordReferenceLink}}">WordRef ↗</a>'
-            "{{/WordReferenceLink}}"
-            "</div>"
-            "</div>"
-            "</div>"
+            "{{/ExampleWithBlank}}"
+        ),
+        "afmt": (
+            "{{#ExampleWithBlank}}"
+            '<div class="card">'
+            '<div class="word">{{Italian}}</div>'
+            '<div class="pos">{{PartOfSpeech}}</div>'
+            "<hr>"
+            '<div class="translation">{{English}}</div>'
+            + _SHARED_BACK_FOOTER
+            + "{{/ExampleWithBlank}}"
         ),
     },
 ]

@@ -1,6 +1,6 @@
 import pytest
 
-from anki_tools.card_builder import build_fields, build_tags, pos_tag
+from anki_tools.card_builder import build_fields, build_tags, make_example_with_blank, pos_tag
 from anki_tools.word_entry import ITALIAN_ABBREVS, WordEntry
 
 
@@ -41,6 +41,17 @@ def test_extra_info_empty_string_when_not_provided():
     assert fields["ExtraInfo"] == ""
 
 
+def test_extra_info_volg_gets_volgare_badge_class():
+    fields = build_fields(_entry(extra_info="volg."))
+    assert fields["ExtraInfo"] == '<span class="badge badge-volgare">volg.</span>'
+
+
+def test_extra_info_multiple_semicolon_separated_badges():
+    fields = build_fields(_entry(extra_info="Irr PP: visto;volg."))
+    assert '<span class="badge">Irr PP: visto</span>' in fields["ExtraInfo"]
+    assert '<span class="badge badge-volgare">volg.</span>' in fields["ExtraInfo"]
+
+
 def test_example_fields_passed_through():
     fields = build_fields(_entry(example_it="Frase.", example_en="Sentence."))
     assert fields["Example"] == "Frase."
@@ -58,13 +69,66 @@ def test_dictionary_link_passed_through():
     assert fields["DictionaryLink"] == "https://example.com"
 
 
-def test_all_ten_fields_present():
+def test_all_fields_present():
     expected = {
         "Italian", "English", "PartOfSpeech", "ExtraInfo",
         "Tier", "TierClass", "DictionaryLink", "WordReferenceLink",
-        "Example", "ExampleTranslation",
+        "Example", "ExampleTranslation", "ExampleWithBlank",
     }
     assert set(build_fields(_entry()).keys()) == expected
+
+
+def test_example_with_blank_auto_generated_when_word_appears_verbatim():
+    fields = build_fields(_entry(italian="sconto", example_it="Mi fa uno sconto?"))
+    assert fields["ExampleWithBlank"] == 'Mi fa uno <span class="blank">___</span>?'
+
+
+def test_example_with_blank_case_insensitive():
+    fields = build_fields(_entry(italian="sconto", example_it="Ho preso uno Sconto."))
+    assert '<span class="blank">___</span>' in fields["ExampleWithBlank"]
+
+
+def test_example_with_blank_empty_when_word_not_verbatim():
+    fields = build_fields(_entry(italian="andare", example_it="Dove vai?"))
+    assert fields["ExampleWithBlank"] == ""
+
+
+def test_example_with_blank_explicit_overrides_auto():
+    fields = build_fields(_entry(
+        italian="sconto",
+        example_it="Mi fa uno sconto?",
+        example_with_blank="Vuoi uno ___?",
+    ))
+    assert fields["ExampleWithBlank"] == 'Vuoi uno <span class="blank">___</span>?'
+
+
+def test_example_with_blank_empty_when_no_example():
+    fields = build_fields(_entry())
+    assert fields["ExampleWithBlank"] == ""
+
+
+# ---------------------------------------------------------------------------
+# make_example_with_blank
+# ---------------------------------------------------------------------------
+
+def test_make_example_with_blank_replaces_first_occurrence():
+    result = make_example_with_blank("casa", "La casa è grande. Vendi la casa.")
+    assert result == "La ___ è grande. Vendi la casa."
+
+
+def test_make_example_with_blank_returns_empty_when_no_match():
+    result = make_example_with_blank("andare", "Dove vai?")
+    assert result == ""
+
+
+def test_make_example_with_blank_case_insensitive():
+    result = make_example_with_blank("sconto", "Ho preso uno SCONTO.")
+    assert result == "Ho preso uno ___."
+
+
+def test_make_example_with_blank_strips_word_whitespace():
+    result = make_example_with_blank("  sconto  ", "Mi fa uno sconto?")
+    assert result == "Mi fa uno ___?"
 
 
 # ---------------------------------------------------------------------------
@@ -82,10 +146,10 @@ def test_all_ten_fields_present():
     ("agg.", "pos::adjective"),
     ("avv.", "pos::adverb"),
     ("prep.", "pos::preposition"),
+    ("inter.", "pos::interjection"),
     ("cong.", ""),
     ("pron.", ""),
     ("art.", ""),
-    ("inter.", ""),
     ("num.", ""),
 ])
 def test_pos_tag_mapping(abbrev, expected):

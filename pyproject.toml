@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anki-tools"
-version = "0.1.1"
+version = "0.1.2"
 description = "Personal vocabulary maintenance tool for Anki decks"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -15,6 +15,7 @@ dependencies = [
 [project.scripts]
 anki-add = "anki_tools.add_words:main"
 anki-cli = "anki_tools.cli:main"
+anki-prioritize = "anki_tools.prioritize:main"
 
 [dependency-groups]
 dev = [

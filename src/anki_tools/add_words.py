@@ -13,6 +13,7 @@ Requires:
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -23,7 +24,14 @@ from anki_tools.client.base import (
     AnkiNotRunningError,
     DuplicateNoteError,
 )
-from anki_tools.models.italian_vocabulary import MODEL_NAME, get_model_definition
+from anki_tools.models.italian_vocabulary import (
+    MODEL_NAME as STANDARD_MODEL_NAME,
+    get_model_definition as get_standard_model_definition,
+)
+from anki_tools.models.italian_vocabulary_blank import (
+    MODEL_NAME as BLANK_MODEL_NAME,
+    get_model_definition as get_blank_model_definition,
+)
 from anki_tools.word_entry import WordEntry
 
 DEFAULT_DECK = "Italian Vocabulary :: Personale"
@@ -50,13 +58,16 @@ def load_batch(path: Path) -> list[WordEntry]:
     return entries
 
 
-def ensure_model(client: AnkiConnectClient) -> None:
-    if MODEL_NAME not in client.model_names():
-        print(f'Note type "{MODEL_NAME}" not found — creating it…')
-        client.create_model(get_model_definition())
-        print(f'  Created "{MODEL_NAME}".')
+def ensure_model(client: AnkiConnectClient, model_definition: dict) -> None:
+    model_name = model_definition["modelName"]
+    if model_name not in client.model_names():
+        print(f'Note type "{model_name}" not found — creating it…')
+        client.create_model(model_definition)
+        print(f'  Created "{model_name}".')
     else:
-        client.update_model_templates(get_model_definition())
+        client.update_model_templates(model_definition)
+        client.update_model_styling(model_definition)
+        client.update_model_fields(model_definition)
 
 
 def ensure_deck(client: AnkiConnectClient, deck_name: str) -> None:
@@ -65,26 +76,40 @@ def ensure_deck(client: AnkiConnectClient, deck_name: str) -> None:
         print(f'Created deck "{deck_name}".')
 
 
+def _strip_html(text: str) -> str:
+    return re.sub(r"<[^>]+>", "", text)
+
+
 def run(
     batch_file: Path,
     deck_name: str,
     on_duplicate: str,
     dry_run: bool,
+    blank: bool = False,
 ) -> None:
+    model_name = BLANK_MODEL_NAME if blank else STANDARD_MODEL_NAME
+    model_definition = get_blank_model_definition() if blank else get_standard_model_definition()
+
     entries = load_batch(batch_file)
     print(f"Loaded {len(entries)} word(s) from {batch_file}.")
 
     if dry_run:
-        print("[dry-run] Would add the following notes:")
+        print(f"[dry-run] Deck: '{deck_name}'  |  Note type: '{model_name}'")
+        print()
         for e in entries:
             fields = build_fields(e)
             tags = build_tags(e)
+            blank_plain = _strip_html(fields.get("ExampleWithBlank", ""))
             print(f"  {e.italian!r} → {e.english!r}  tags={tags}")
+            if blank_plain:
+                print(f"      blank: {blank_plain!r}")
+        print()
+        print(f"  {len(entries)} notes")
         return
 
     try:
         client = AnkiConnectClient()
-        ensure_model(client)
+        ensure_model(client, model_definition)
         ensure_deck(client, deck_name)
     except AnkiNotRunningError as exc:
         print(f"Error: {exc}", file=sys.stderr)
@@ -108,14 +133,16 @@ def run(
                     "--on-duplicate update is not yet implemented."
                 )
 
+            fields = build_fields(entry)
             client.add_note(
                 deck_name=deck_name,
-                model_name=MODEL_NAME,
-                fields=build_fields(entry),
+                model_name=model_name,
+                fields=fields,
                 tags=build_tags(entry),
             )
             print(f"  Added: {entry.italian!r}")
             added += 1
+
         except (DuplicateNoteError, NotImplementedError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             sys.exit(1)
@@ -147,6 +174,14 @@ def main() -> None:
         action="store_true",
         help="Print what would be added without writing to Anki",
     )
+    parser.add_argument(
+        "--blank",
+        action="store_true",
+        help=(
+            f'Use the fill-in-the-blank-only note type ("{BLANK_MODEL_NAME}") '
+            "instead of the standard note type. Use this when adding to a dedicated blank-practice deck."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.batch_file.exists():
@@ -158,6 +193,7 @@ def main() -> None:
         deck_name=args.deck,
         on_duplicate=args.on_duplicate,
         dry_run=args.dry_run,
+        blank=args.blank,
     )
 
 

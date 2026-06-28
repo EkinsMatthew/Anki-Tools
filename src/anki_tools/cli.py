@@ -13,7 +13,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from anki_tools.card_builder import pos_tag as compute_pos_tag
+from anki_tools.card_builder import make_example_with_blank, pos_tag as compute_pos_tag
 from anki_tools.word_entry import ITALIAN_ABBREVS, TAG_PATTERN, WordEntry
 
 _COLS = 3
@@ -96,6 +96,19 @@ def _collect_word(session_tags: set[str]) -> WordEntry:
     pos = _prompt_pos()
     example_it = _prompt("Example sentence (Italian)", required=False)
     example_en = _prompt("Example translation", required=False) if example_it else ""
+
+    example_with_blank = ""
+    if example_it:
+        auto = make_example_with_blank(italian, example_it)
+        if auto:
+            print(f"  (fill-in-the-blank auto-generated: {auto!r})")
+            example_with_blank = auto
+        else:
+            example_with_blank = _prompt(
+                f"Fill-in-the-blank sentence (e.g. 'Mi fa uno ___?')",
+                required=False,
+            )
+
     extra_info = _prompt("Extra info / badge text", required=False)
     dictionary_link = _prompt("Dictionary link", required=False)
     tags = _prompt_tags(session_tags, compute_pos_tag(pos))
@@ -107,6 +120,7 @@ def _collect_word(session_tags: set[str]) -> WordEntry:
         tags=tags,
         example_it=example_it,
         example_en=example_en,
+        example_with_blank=example_with_blank,
         extra_info=extra_info,
         dictionary_link=dictionary_link,
     )
